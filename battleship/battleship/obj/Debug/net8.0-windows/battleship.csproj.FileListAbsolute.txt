@@ -1,0 +1,17 @@
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\bin\Debug\net8.0-windows\battleship.exe
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\bin\Debug\net8.0-windows\battleship.deps.json
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\bin\Debug\net8.0-windows\battleship.runtimeconfig.json
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\bin\Debug\net8.0-windows\battleship.dll
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\bin\Debug\net8.0-windows\battleship.pdb
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.Form1.resources
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.csproj.GenerateResource.cache
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.AssemblyInfoInputs.cache
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.AssemblyInfo.cs
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.csproj.CoreCompileInputs.cache
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.sourcelink.json
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.dll
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\refint\battleship.dll
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.pdb
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\battleship.genruntimeconfig.cache
+C:\Users\Алексей\source\repos\battleship\battleship\battleship\obj\Debug\net8.0-windows\ref\battleship.dll
