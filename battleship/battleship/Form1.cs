@@ -7,7 +7,7 @@ namespace battleship
 {
     public partial class Form1 : Form
     {
-        // ====== КОНСТАНТЫ ДЛЯ РАЗМЕТКИ ======
+        // ====== КОНСТАНТЫ ДЛЯ РАЗМЕТКИ ====== 
         const int CellSize = 30;
         const int CellGap = 1;
         const int FieldMarginX = 20;
