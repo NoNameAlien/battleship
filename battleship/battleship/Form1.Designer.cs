@@ -9,7 +9,7 @@ namespace battleship
         private void InitializeComponent()
         {
             this.SuspendLayout();
-            // 
+            //  
             // Form1
             //  
             this.ClientSize = new System.Drawing.Size(840, 480);
