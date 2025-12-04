@@ -1,6 +1,0 @@
-# Папки кэша Visual Studio
-.vs/
-**/.vs/
-
-# Индексные файлы VS
-*.vsidx
