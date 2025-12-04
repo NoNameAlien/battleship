@@ -7,15 +7,15 @@ namespace battleship
 {
     public partial class Form1 : Form
     {
-        // ====== КОНСТАНТЫ ДЛЯ РАЗМЕТКИ ====== 
+        // ====== ÊÎÍÑÒÀÍÒÛ ÄËß ÐÀÇÌÅÒÊÈ ======
         const int CellSize = 30;
         const int CellGap = 1;
         const int FieldMarginX = 20;
         const int FieldMarginY = 30;
 
-        // ====== ВНУТРЕННИЕ ТИПЫ ======
+        // ====== ÂÍÓÒÐÅÍÍÈÅ ÒÈÏÛ ======
 
-        // Состояние клетки
+        // Ñîñòîÿíèå êëåòêè
         enum CellState
         {
             Empty,
@@ -24,96 +24,77 @@ namespace battleship
             Miss
         }
 
-        // Игрок
+        // Ð˜Ð³Ñ€Ð¾Ðº
         enum Player
         {
             Player1,
             Player2
         }
 
-        // Фаза игры
+        // Ôàçà èãðû
         enum GamePhase
         {
-            SetupP1,
-            SetupP2,
-            Battle
+            SetupP1,   // Èãðîê 1 ðàññòàâëÿåò êîðàáëè
+            SetupP2,   // Èãðîê 2 ðàññòàâëÿåò êîðàáëè
+            Battle     // Áîé
         }
 
-        // Переключения, требующие подтверждения "Готово"
+        // Ôîðìà ïåðåêëþ÷åíèÿ õîäà/ôàçû, êîòîðàÿ æä¸ò íàæàòèÿ "Ãîòîâî"
         enum PendingSwitchMode
         {
             None,
-            ToSetupP2,
-            ToBattleP1, 
-            NextTurnBattle 
+            ToSetupP2,      // ïîñëå ðàññòàíîâêè Èãðîêà 1 – ïåðåéòè ê ðàññòàíîâêå Èãðîêà 2
+            ToBattleP1,     // ïîñëå ðàññòàíîâêè Èãðîêà 2 – ïåðåéòè ê áîþ, õîä Èãðîêà 1
+            NextTurnBattle  // ïîñëå "Êîíåö õîäà" – ïåðåéòè ê ñëåäóþùåìó èãðîêó â áîþ
         }
 
-        // Режим игры (для меню)
-        enum GameMode
-        {
-            None,
-            Custom,     // Своя игра (ручная расстановка)
-            Standard    // Стандартная игра (авторасстановка)
-        }
-
-        // Игровое поле
+        // Èãðîâîå ïîëå
         class Board
         {
             public const int Size = 10;
             public CellState[,] Cells = new CellState[Size, Size];
-            public int TotalShipCells;     // сколько клеток занято кораблями
-            public int HitCount;           // сколько клеток уже подбито
+            public int TotalShipCells;     // ÑÐºÐ¾Ð»ÑŒÐºÐ¾ ÐºÐ»ÐµÑ‚Ð¾Ðº Ð·Ð°Ð½ÑÑ‚Ð¾ ÐºÐ¾Ñ€Ð°Ð±Ð»ÑÐ¼Ð¸
+            public int HitCount;           // ÑÐºÐ¾Ð»ÑŒÐºÐ¾ ÐºÐ»ÐµÑ‚Ð¾Ðº ÑƒÐ¶Ðµ Ð¿Ð¾Ð´Ð±Ð¸Ñ‚Ð¾
 
             public bool AllShipsDestroyed => HitCount >= TotalShipCells;
         }
 
-        // ====== ПОЛЯ СОСТОЯНИЯ И ИНТЕРФЕЙСА ======
+        // ====== ÏÎËß ÑÎÑÒÎßÍÈß È ÈÍÒÅÐÔÅÉÑÀ ======
 
-        // Игровое состояние
-        Board board1 = new Board();   // поле игрока 1
-        Board board2 = new Board();   // поле игрока 2
+        // Èãðîâîå ñîñòîÿíèå
+        Board board1 = new Board();   // ïîëå èãðîêà 1
+        Board board2 = new Board();   // ïîëå èãðîêà 2
         Player currentPlayer = Player.Player1;
         GamePhase phase = GamePhase.SetupP1;
         PendingSwitchMode pendingSwitch = PendingSwitchMode.None;
-        GameMode gameMode = GameMode.None;
         bool gameOver = false;
 
-        // Был ли уже ПРОМАХ в текущем ходу
+        // Áûë ëè óæå ñäåëàí âûñòðåë â òåêóùåì õîäó
         bool shotMadeThisTurn = false;
 
-        // Кнопки для отображения полей
+        // Êíîïêè äëÿ îòîáðàæåíèÿ ïîëåé
         Button[,] buttonsP1 = new Button[Board.Size, Board.Size];
         Button[,] buttonsP2 = new Button[Board.Size, Board.Size];
 
-        // Элементы UI
+        // Ýëåìåíòû UI
         Label lblCurrentPlayer;
         Label lblInfo;
         GroupBox groupP1;
         GroupBox groupP2;
 
-        // Кнопка "Завершить расстановку" / "Конец хода"
+        // Êíîïêà "Çàâåðøèòü ðàññòàíîâêó" / "Êîíåö õîäà"
         Button btnFinishSetup;
 
-        // Кнопка "Закончить бой" (возврат в меню)
-        Button btnEndBattle;
-
-        // Панель "Передайте ход другому игроку"
+        // Ïàíåëü "Ïåðåäàéòå õîä äðóãîìó èãðîêó"
         Panel panelSwitch;
         Label lblSwitchMessage;
         Button btnSwitchOk;
 
-        // Главное меню
-        Panel panelMenu;
-        Label lblMenuTitle;
-        Button btnMenuStandard;
-        Button btnMenuCustom;
-        Button btnMenuExit;
-
         public Form1()
         {
-            InitializeComponent();
+            InitializeComponent(); // êîä èç Form1.Designer.cs
 
-            this.Text = "Морской бой - человек против человека";
+            this.Text = "ÐœÐ¾Ñ€ÑÐºÐ¾Ð¹ Ð±Ð¾Ð¹ - Ñ‡ÐµÐ»Ð¾Ð²ÐµÐº Ð¿Ñ€Ð¾Ñ‚Ð¸Ð² Ñ‡ÐµÐ»Ð¾Ð²ÐµÐºÐ°";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MaximizeBox = false;
 
@@ -122,11 +103,11 @@ namespace battleship
             ShowMainMenu();
         }
 
-        // ====== СОЗДАНИЕ ИНТЕРФЕЙСА И МЕНЮ ======
+        // ====== ÑÎÇÄÀÍÈÅ ÈÍÒÅÐÔÅÉÑÀ ======
 
         private void CreateUi()
         {
-            // Метка "Чей ход"
+            // ÐœÐµÑ‚ÐºÐ° "Ð§ÐµÐ¹ Ñ…Ð¾Ð´"
             lblCurrentPlayer = new Label
             {
                 AutoSize = true,
@@ -135,7 +116,7 @@ namespace battleship
             };
             this.Controls.Add(lblCurrentPlayer);
 
-            // Информационная строка (сообщения об ошибках и т.п.)
+            // Ð˜Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¾Ð½Ð½Ð°Ñ ÑÑ‚Ñ€Ð¾ÐºÐ° (ÑÐ¾Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ñ Ð¾Ð± Ð¾ÑˆÐ¸Ð±ÐºÐ°Ñ… Ð¸ Ñ‚.Ð¿.)
             lblInfo = new Label
             {
                 AutoSize = false,
@@ -146,51 +127,39 @@ namespace battleship
             };
             this.Controls.Add(lblInfo);
 
-            // Размеры рамки поля в зависимости от сетки
+            // Ðàçìåðû ðàìêè ïîëÿ â çàâèñèìîñòè îò ñåòêè
             int fieldWidth = FieldMarginX * 2 + Board.Size * CellSize + (Board.Size - 1) * CellGap;
             int fieldHeight = FieldMarginY + Board.Size * CellSize + (Board.Size - 1) * CellGap + 20;
 
-            // Группа для поля Игрока 1
+            // Ãðóïïà äëÿ ïîëÿ Èãðîêà 1
             groupP1 = new GroupBox
             {
-                Text = "Поле игрока 1",
+                Text = "Ïîëå èãðîêà 1",
                 Location = new Point(20, 80),
                 Size = new Size(fieldWidth, fieldHeight)
             };
             this.Controls.Add(groupP1);
 
-            // Группа для поля Игрока 2
+            // Ãðóïïà äëÿ ïîëÿ Èãðîêà 2
             groupP2 = new GroupBox
             {
-                Text = "Поле игрока 2",
+                Text = "Ïîëå èãðîêà 2",
                 Location = new Point(450, 80),
                 Size = new Size(fieldWidth, fieldHeight)
             };
             this.Controls.Add(groupP2);
 
-            // Кнопка "Завершить расстановку" / "Конец хода"
+            // Êíîïêà "Çàâåðøèòü ðàññòàíîâêó" äëÿ ôàç ðàññòàíîâêè è "Êîíåö õîäà" â áîþ
             btnFinishSetup = new Button
             {
-                Text = "Завершить расстановку",
+                Text = "Çàâåðøèòü ðàññòàíîâêó",
                 Location = new Point(360, 10),
                 AutoSize = true
             };
             btnFinishSetup.Click += BtnFinishSetup_Click;
             this.Controls.Add(btnFinishSetup);
 
-            // Кнопка "Закончить бой"
-            btnEndBattle = new Button
-            {
-                Text = "Закончить бой",
-                AutoSize = true
-            };
-            int endBtnX = groupP2.Location.X + groupP2.Width - btnEndBattle.PreferredSize.Width;
-            btnEndBattle.Location = new Point(endBtnX, 10);
-
-            btnEndBattle.Click += BtnEndBattle_Click;
-            this.Controls.Add(btnEndBattle);
-
-            // Создаём сетки кнопок 10x10
+            // Ñîçäà¸ì ñåòêè êíîïîê 10x10
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -198,19 +167,19 @@ namespace battleship
                     int bx = FieldMarginX + x * (CellSize + CellGap);
                     int by = FieldMarginY + y * (CellSize + CellGap);
 
-                    // Кнопки для поля игрока 1
+                    // Êíîïêè äëÿ ïîëÿ èãðîêà 1
                     var btn1 = new Button
                     {
                         Width = CellSize,
                         Height = CellSize,
                         Location = new Point(bx, by),
-                        Tag = new Point(x, y) 
+                        Tag = new Point(x, y) // çàïîìèíàåì êîîðäèíàòû
                     };
                     btn1.Click += Player1BoardClick;
                     groupP1.Controls.Add(btn1);
                     buttonsP1[x, y] = btn1;
 
-                    // Кнопки для поля игрока 2
+                    // ÐšÐ½Ð¾Ð¿ÐºÐ¸ Ð´Ð»Ñ Ð¿Ð¾Ð»Ñ Ð¸Ð³Ñ€Ð¾ÐºÐ° 2
                     var btn2 = new Button
                     {
                         Width = CellSize,
@@ -224,7 +193,7 @@ namespace battleship
                 }
             }
 
-            // Панель "Передайте ход"
+            // Ïàíåëü "Ïåðåäàéòå õîä"
             panelSwitch = new Panel
             {
                 Size = new Size(400, 150),
@@ -248,7 +217,7 @@ namespace battleship
 
             btnSwitchOk = new Button
             {
-                Text = "Готово",
+                Text = "Ãîòîâî",
                 Width = 80,
                 Height = 30,
                 Location = new Point((panelSwitch.Width - 80) / 2, panelSwitch.Height - 50)
@@ -260,137 +229,28 @@ namespace battleship
             panelSwitch.BringToFront();
         }
 
-        private void CreateMainMenu()
-        {
-            panelMenu = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = this.BackColor,
-                Visible = false
-            };
+        // ====== ÈÍÈÖÈÀËÈÇÀÖÈß ÈÃÐÛ ======
 
-            lblMenuTitle = new Label
-            {
-                AutoSize = false,
-                Text = "Морской бой",
-                ForeColor = Color.Black,
-                Font = new Font(FontFamily.GenericSansSerif, 20, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Dock = DockStyle.Top,
-                Height = 80
-            };
-            panelMenu.Controls.Add(lblMenuTitle);
-
-            btnMenuStandard = new Button
-            {
-                Text = "Стандартная игра",
-                Width = 200,
-                Height = 40,
-                Location = new Point(320, 130)
-            };
-            btnMenuStandard.Click += BtnMenuStandard_Click;
-            panelMenu.Controls.Add(btnMenuStandard);
-
-            btnMenuCustom = new Button
-            {
-                Text = "Своя игра",
-                Width = 200,
-                Height = 40,
-                Location = new Point(320, 190)
-            };
-            btnMenuCustom.Click += BtnMenuCustom_Click;
-            panelMenu.Controls.Add(btnMenuCustom);
-
-            btnMenuExit = new Button
-            {
-                Text = "Выйти",
-                Width = 200,
-                Height = 40,
-                Location = new Point(320, 250)
-            };
-            btnMenuExit.Click += BtnMenuExit_Click;
-            panelMenu.Controls.Add(btnMenuExit);
-
-            this.Controls.Add(panelMenu);
-            panelMenu.BringToFront();
-        }
-
-        private void ShowMainMenu()
-        {
-            gameMode = GameMode.None;
-            phase = GamePhase.SetupP1;
-            pendingSwitch = PendingSwitchMode.None;
-            gameOver = false;
-            shotMadeThisTurn = false;
-
-            panelMenu.Visible = true;
-            panelMenu.BringToFront();
-            panelSwitch.Visible = false;
-
-            btnFinishSetup.Enabled = false;
-            btnFinishSetup.BackColor = Color.LightGray;
-            btnEndBattle.Enabled = false;
-            btnEndBattle.BackColor = Color.LightGray;
-
-            MaskBoardsVisual();
-            lblCurrentPlayer.Text = "Морской бой";
-            ShowInfo("Выберите режим: стандартная игра или своя игра.");
-        }
-
-        // ====== ИНИЦИАЛИЗАЦИЯ ИГРЫ ======
-
-        // Своя игра - ручная расстановка
         private void InitBoards()
         {
             ClearBoard(board1);
             ClearBoard(board2);
 
+            // Ñòàðòóåì ñ ðàññòàíîâêè Èãðîêà 1
             phase = GamePhase.SetupP1;
             currentPlayer = Player.Player1;
             gameOver = false;
             shotMadeThisTurn = false;
 
             btnFinishSetup.Enabled = true;
-            btnFinishSetup.Text = "Завершить расстановку";
+            btnFinishSetup.Text = "Çàâåðøèòü ðàññòàíîâêó";
             btnFinishSetup.BackColor = Color.LightYellow;
 
-            btnEndBattle.Enabled = true;
-            btnEndBattle.BackColor = SystemColors.Control;
-
             UpdateCurrentPlayerLabel();
             UpdateGroupTitles();
             RefreshBoardsVisual();
-            ShowInfo("Игрок 1: расставьте свои корабли на левом поле. " +
-                     "Клик – поставить/убрать палубу. Затем нажмите \"Завершить расстановку\".");
-            panelSwitch.Visible = false;
-        }
-
-        // Стандартная игра - авторасстановка
-        private void InitBoardsStandard()
-        {
-            ClearBoard(board1);
-            ClearBoard(board2);
-
-            PlaceStandardFleet(board1);
-            PlaceStandardFleet(board2);
-
-            phase = GamePhase.Battle;
-            currentPlayer = Player.Player1;
-            gameOver = false;
-            shotMadeThisTurn = false;
-
-            btnFinishSetup.Enabled = false;
-            btnFinishSetup.Text = "Конец хода";
-            btnFinishSetup.BackColor = Color.LightGray;
-
-            btnEndBattle.Enabled = true;
-            btnEndBattle.BackColor = SystemColors.Control;
-
-            UpdateCurrentPlayerLabel();
-            UpdateGroupTitles();
-            RefreshBoardsVisual();
-
-            ShowInfo("Стандартная игра. Игрок 1 стреляет по вражескому полю (справа).");
+            ShowInfo("Èãðîê 1: ðàññòàâüòå ñâîè êîðàáëè íà ëåâîì ïîëå. " +
+                     "Êëèê – ïîñòàâèòü/óáðàòü ïàëóáó. Çàòåì íàæìèòå \"Çàâåðøèòü ðàññòàíîâêó\".");
             panelSwitch.Visible = false;
         }
 
@@ -404,51 +264,10 @@ namespace battleship
             b.HitCount = 0;
         }
 
-        private void PlaceStandardFleet(Board b)
-        {
-            void PutShip(int x1, int y1, int x2, int y2)
-            {
-                if (x1 == x2)
-                {
-                    int step = y2 > y1 ? 1 : -1;
-                    for (int y = y1; y != y2 + step; y += step)
-                    {
-                        b.Cells[x1, y] = CellState.Ship;
-                        b.TotalShipCells++;
-                    }
-                }
-                else if (y1 == y2)
-                {
-                    int step = x2 > x1 ? 1 : -1;
-                    for (int x = x1; x != x2 + step; x += step)
-                    {
-                        b.Cells[x, y1] = CellState.Ship;
-                        b.TotalShipCells++;
-                    }
-                }
-            }
-
-            // Пример стандартного флота:
-            // 4-палубник
-            PutShip(1, 1, 4, 1);
-            // 3-палубники
-            PutShip(1, 3, 3, 3);
-            PutShip(6, 2, 6, 4);
-            // 2-палубники
-            PutShip(0, 7, 1, 7);
-            PutShip(4, 6, 5, 6);
-            PutShip(8, 8, 9, 8);
-            // 1-палубники
-            PutShip(9, 0, 9, 0);
-            PutShip(0, 9, 0, 9);
-            PutShip(5, 9, 5, 9);
-            PutShip(7, 5, 7, 5);
-        }
-
-        // Переключение отображения полей
+        // Ïåðåêëþ÷åíèå îòîáðàæåíèÿ ïîëåé
         private void RefreshBoardsVisual()
         {
-            // Поле Игрока 1 (левое)
+            // Ïîëå Èãðîêà 1 (ëåâîå)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -473,7 +292,7 @@ namespace battleship
                 }
             }
 
-            // Поле Игрока 2 (правое)
+            // Ïîëå Èãðîêà 2 (ïðàâîå)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -499,14 +318,23 @@ namespace battleship
             }
         }
 
-        // Маскируем полей
+        // Ìàñêèðóåì îáà ïîëÿ, ÷òîáû ïðè ïåðåäà÷å õîäà íåëüçÿ áûëî íè÷åãî ïîäñìàòðèâàòü
         private void MaskBoardsVisual()
         {
+            // Ëåâîå ïîëå (Èãðîê 1)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
                 {
                     buttonsP1[x, y].BackColor = SystemColors.ControlDark;
+                }
+            }
+
+            // Ïðàâîå ïîëå (Èãðîê 2)
+            for (int y = 0; y < Board.Size; y++)
+            {
+                for (int x = 0; x < Board.Size; x++)
+                {
                     buttonsP2[x, y].BackColor = SystemColors.ControlDark;
                 }
             }
@@ -514,33 +342,60 @@ namespace battleship
 
         private void UpdateCurrentPlayerLabel()
         {
-            string playerText = currentPlayer == Player.Player1 ? "Игрок 1" : "Игрок 2";
-            lblCurrentPlayer.Text = $"Ход: {playerText}";
+            string playerText = currentPlayer == Player.Player1 ? "Ð˜Ð³Ñ€Ð¾Ðº 1" : "Ð˜Ð³Ñ€Ð¾Ðº 2";
+            lblCurrentPlayer.Text = $"Ð¥Ð¾Ð´: {playerText}";
         }
 
         private void UpdateGroupTitles()
         {
             if (phase == GamePhase.SetupP1)
             {
-                groupP1.Text = "Поле игрока 1 (расстановка)";
-                groupP2.Text = "Поле игрока 2 (ожидание)";
+                groupP1.Text = "ÐŸÐ¾Ð»Ðµ Ð¸Ð³Ñ€Ð¾ÐºÐ° 1 (Ñ€Ð°ÑÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ°)";
+                groupP2.Text = "ÐŸÐ¾Ð»Ðµ Ð¸Ð³Ñ€Ð¾ÐºÐ° 2 (Ð¾Ð¶Ð¸Ð´Ð°Ð½Ð¸Ðµ)";
             }
             else if (phase == GamePhase.SetupP2)
             {
-                groupP1.Text = "Поле игрока 1 (ожидание)";
-                groupP2.Text = "Поле игрока 2 (расстановка)";
+                groupP1.Text = "ÐŸÐ¾Ð»Ðµ Ð¸Ð³Ñ€Ð¾ÐºÐ° 1 (Ð¾Ð¶Ð¸Ð´Ð°Ð½Ð¸Ðµ)";
+                groupP2.Text = "ÐŸÐ¾Ð»Ðµ Ð¸Ð³Ñ€Ð¾ÐºÐ° 2 (Ñ€Ð°ÑÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ°)";
             }
             else // Battle
             {
                 if (currentPlayer == Player.Player1)
                 {
-                    groupP1.Text = "Своё поле";
-                    groupP2.Text = "Поле противника";
+                    groupP1.Text = "Ð¡Ð²Ð¾Ñ‘ Ð¿Ð¾Ð»Ðµ";
+                    groupP2.Text = "ÐŸÐ¾Ð»Ðµ Ð¿Ñ€Ð¾Ñ‚Ð¸Ð²Ð½Ð¸ÐºÐ°";
                 }
                 else
                 {
-                    groupP1.Text = "Поле противника";
-                    groupP2.Text = "Своё поле";
+                    groupP1.Text = "ÐŸÐ¾Ð»Ðµ Ð¿Ñ€Ð¾Ñ‚Ð¸Ð²Ð½Ð¸ÐºÐ°";
+                    groupP2.Text = "Ð¡Ð²Ð¾Ñ‘ Ð¿Ð¾Ð»Ðµ";
+                }
+            }
+        }
+
+        private void UpdateGroupTitles()
+        {
+            if (phase == GamePhase.SetupP1)
+            {
+                groupP1.Text = "Ïîëå èãðîêà 1 (ðàññòàíîâêà)";
+                groupP2.Text = "Ïîëå èãðîêà 2 (îæèäàíèå)";
+            }
+            else if (phase == GamePhase.SetupP2)
+            {
+                groupP1.Text = "Ïîëå èãðîêà 1 (îæèäàíèå)";
+                groupP2.Text = "Ïîëå èãðîêà 2 (ðàññòàíîâêà)";
+            }
+            else // Battle
+            {
+                if (currentPlayer == Player.Player1)
+                {
+                    groupP1.Text = "Ñâî¸ ïîëå";
+                    groupP2.Text = "Ïîëå ïðîòèâíèêà";
+                }
+                else
+                {
+                    groupP1.Text = "Ïîëå ïðîòèâíèêà";
+                    groupP2.Text = "Ñâî¸ ïîëå";
                 }
             }
         }
@@ -550,7 +405,7 @@ namespace battleship
             lblInfo.Text = message;
         }
 
-        // ====== РАССТАНОВКА КОРАБЛЕЙ ======
+        // ====== ÐÀÑÑÒÀÍÎÂÊÀ ÊÎÐÀÁËÅÉ ======
 
         private void ToggleShip(Board b, int x, int y)
         {
@@ -569,35 +424,35 @@ namespace battleship
 
         private void BtnFinishSetup_Click(object? sender, EventArgs e)
         {
-            if (panelMenu != null && panelMenu.Visible) return;
-
             if (phase == GamePhase.SetupP1)
             {
                 if (board1.TotalShipCells == 0)
                 {
                     SystemSounds.Beep.Play();
-                    ShowInfo("У Игрока 1 нет ни одного корабля. Расставьте хотя бы один.");
+                    ShowInfo("Ó Èãðîêà 1 íåò íè îäíîãî êîðàáëÿ. Ðàññòàâüòå õîòÿ áû îäèí.");
                     return;
                 }
 
+                // Íå ïåðåêëþ÷àåì ôàçó è èãðîêà ñðàçó – òîëüêî ñòàâèì â î÷åðåäü
                 pendingSwitch = PendingSwitchMode.ToSetupP2;
 
-                ShowSwitchPanel("Передайте управление Игроку 2.\n" +
-                                "Нажмите \"Готово\", когда Игрок 2 будет готов к расстановке.");
+                ShowSwitchPanel("Ïåðåäàéòå óïðàâëåíèå Èãðîêó 2.\n" +
+                                "Íàæìèòå \"Ãîòîâî\", êîãäà Èãðîê 2 áóäåò ãîòîâ ê ðàññòàíîâêå.");
             }
             else if (phase == GamePhase.SetupP2)
             {
                 if (board2.TotalShipCells == 0)
                 {
                     SystemSounds.Beep.Play();
-                    ShowInfo("У Игрока 2 нет ни одного корабля. Расставьте хотя бы один.");
+                    ShowInfo("Ó Èãðîêà 2 íåò íè îäíîãî êîðàáëÿ. Ðàññòàâüòå õîòÿ áû îäèí.");
                     return;
                 }
 
+                // Ïåðåõîä ê áîþ – òîæå îòêëàäûâàåì äî íàæàòèÿ "Ãîòîâî"
                 pendingSwitch = PendingSwitchMode.ToBattleP1;
 
-                ShowSwitchPanel("Передайте управление Игроку 1.\n" +
-                                "Нажмите \"Готово\", когда Игрок 1 будет готов начать бой.");
+                ShowSwitchPanel("Ïåðåäàéòå óïðàâëåíèå Èãðîêó 1.\n" +
+                                "Íàæìèòå \"Ãîòîâî\", êîãäà Èãðîê 1 áóäåò ãîòîâ íà÷àòü áîé.");
             }
             else if (phase == GamePhase.Battle)
             {
@@ -607,24 +462,20 @@ namespace battleship
                     return;
                 }
 
-                // shotMadeThisTurn == true означает, что уже был ПРОМАХ
+                // shotMadeThisTurn == true òåïåðü îçíà÷àåò, ÷òî óæå áûë ÏÐÎÌÀÕ
                 if (!shotMadeThisTurn)
                 {
                     SystemSounds.Beep.Play();
-                    ShowInfo("Ход ещё не завершён. При промахе нажмите \"Конец хода\".");
+                    ShowInfo("Õîä åù¸ íå çàâåðø¸í. Ñäåëàéòå âûñòðåë è ïðè ïðîìàõå íàæìèòå \"Êîíåö õîäà\".");
                     return;
                 }
 
+                // Çàâåðøåíèå õîäà âðó÷íóþ – òîëüêî ñòàâèì â î÷åðåäü ïåðåêëþ÷åíèå
                 SwitchPlayer();
             }
         }
 
-        private void BtnEndBattle_Click(object? sender, EventArgs e)
-        {
-            ShowMainMenu();
-        }
-
-        // ====== ПАНЕЛЬ ПЕРЕДАЧИ ХОДА ======
+        // ====== ÏÀÍÅËÜ ÏÅÐÅÄÀ×È ÕÎÄÀ ======
 
         private void ShowSwitchPanel(string message)
         {
@@ -642,14 +493,14 @@ namespace battleship
         {
             panelSwitch.Visible = false;
 
-            // Выполняем отложенное переключение
+            // Âûïîëíÿåì îòëîæåííîå ïåðåêëþ÷åíèå
             if (pendingSwitch == PendingSwitchMode.ToSetupP2)
             {
                 phase = GamePhase.SetupP2;
                 currentPlayer = Player.Player2;
                 shotMadeThisTurn = false;
 
-                btnFinishSetup.Text = "Завершить расстановку";
+                btnFinishSetup.Text = "Çàâåðøèòü ðàññòàíîâêó";
                 btnFinishSetup.Enabled = true;
                 btnFinishSetup.BackColor = Color.LightYellow;
 
@@ -657,8 +508,8 @@ namespace battleship
                 UpdateGroupTitles();
                 RefreshBoardsVisual();
 
-                ShowInfo("Игрок 2: расставьте свои корабли на правом поле. " +
-                         "Клик – поставить/убрать палубу. Затем нажмите \"Завершить расстановку\".");
+                ShowInfo("Èãðîê 2: ðàññòàâüòå ñâîè êîðàáëè íà ïðàâîì ïîëå. " +
+                         "Êëèê – ïîñòàâèòü/óáðàòü ïàëóáó. Çàòåì íàæìèòå \"Çàâåðøèòü ðàññòàíîâêó\".");
             }
             else if (pendingSwitch == PendingSwitchMode.ToBattleP1)
             {
@@ -667,7 +518,7 @@ namespace battleship
                 gameOver = false;
                 shotMadeThisTurn = false;
 
-                btnFinishSetup.Text = "Конец хода";
+                btnFinishSetup.Text = "Êîíåö õîäà";
                 btnFinishSetup.Enabled = false;
                 btnFinishSetup.BackColor = Color.LightGray;
 
@@ -675,10 +526,11 @@ namespace battleship
                 UpdateGroupTitles();
                 RefreshBoardsVisual();
 
-                ShowInfo("Бой начался. Игрок 1 стреляет по вражескому полю (справа).");
+                ShowInfo("Áîé íà÷àëñÿ. Èãðîê 1 ñòðåëÿåò ïî âðàæåñêîìó ïîëþ (ñïðàâà).");
             }
             else if (pendingSwitch == PendingSwitchMode.NextTurnBattle)
             {
+                // Òîëüêî òåïåðü ðåàëüíî ìåíÿåì èãðîêà
                 currentPlayer = currentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
                 shotMadeThisTurn = false;
 
@@ -690,19 +542,19 @@ namespace battleship
                 RefreshBoardsVisual();
 
                 if (currentPlayer == Player.Player1)
-                    ShowInfo("Игрок 1: сделайте выстрел по вражескому полю (справа).");
+                    ShowInfo("Èãðîê 1: ñäåëàéòå îäèí âûñòðåë ïî âðàæåñêîìó ïîëþ (ñïðàâà).");
                 else
-                    ShowInfo("Игрок 2: сделайте выстрел по вражескому полю (слева).");
+                    ShowInfo("Èãðîê 2: ñäåëàéòå îäèí âûñòðåë ïî âðàæåñêîìó ïîëþ (ñëåâà).");
             }
 
             pendingSwitch = PendingSwitchMode.None;
         }
 
-        // ====== ОБРАБОТКА КЛИКОВ ПО ПОЛЯМ ======
+        // ====== ÎÁÐÀÁÎÒÊÀ ÊËÈÊÎÂ ÏÎ ÏÎËßÌ ======
 
         private void Player1BoardClick(object? sender, EventArgs e)
         {
-            if (panelSwitch.Visible || (panelMenu != null && panelMenu.Visible)) return;
+            if (panelSwitch.Visible) return;
 
             var btn = (Button)sender!;
             var pt = (Point)btn.Tag;
@@ -724,11 +576,11 @@ namespace battleship
                 return;
             }
 
-            // В бою по полю Игрока 1 может стрелять только Игрок 2
+            // Â áîþ ïî ïîëþ Èãðîêà 1 ìîæåò ñòðåëÿòü òîëüêî Èãðîê 2
             if (currentPlayer != Player.Player2)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Сейчас ход Игрока 1 – он стреляет по вражескому полю справа.");
+                ShowInfo("Ñåé÷àñ õîä Èãðîêà 1 – îí ñòðåëÿåò ïî âðàæåñêîìó ïîëþ ñïðàâà.");
                 return;
             }
 
@@ -737,7 +589,7 @@ namespace battleship
 
         private void Player2BoardClick(object? sender, EventArgs e)
         {
-            if (panelSwitch.Visible || (panelMenu != null && panelMenu.Visible)) return;
+            if (panelSwitch.Visible) return;
 
             var btn = (Button)sender!;
             var pt = (Point)btn.Tag;
@@ -759,26 +611,28 @@ namespace battleship
                 return;
             }
 
+            // Â áîþ ïî ïîëþ Èãðîêà 2 ìîæåò ñòðåëÿòü òîëüêî Èãðîê 1
             if (currentPlayer != Player.Player1)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Сейчас ход Игрока 2 – он стреляет по вражескому полю слева.");
+                ShowInfo("Ñåé÷àñ õîä Èãðîêà 2 – îí ñòðåëÿåò ïî âðàæåñêîìó ïîëþ ñëåâà.");
                 return;
             }
 
             ProcessShot(board2, buttonsP2, x, y, shooter: Player.Player1);
         }
 
-        // ====== ЛОГИКА ВЫСТРЕЛА ======
+        // ====== ËÎÃÈÊÀ ÂÛÑÒÐÅËÀ ======
         private void ProcessShot(Board targetBoard, Button[,] targetButtons, int x, int y, Player shooter)
         {
             if (phase != GamePhase.Battle) return;
 
-            // shotMadeThisTurn == true → уже был промах, ждём только "Конец хода"
+            // shotMadeThisTurn == true òåïåðü çíà÷èò, ÷òî â ýòîì õîäó óæå áûë ÏÐÎÌÀÕ,
+            // è íàäî òîëüêî íàæàòü "Êîíåö õîäà"
             if (shotMadeThisTurn)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Вы уже промахнулись в этом ходу. Нажмите \"Конец хода\", чтобы передать ход.");
+                ShowInfo("Âû óæå ïðîìàõíóëèñü â ýòîì õîäó. Íàæìèòå \"Êîíåö õîäà\", ÷òîáû ïåðåäàòü õîä.");
                 return;
             }
 
@@ -787,7 +641,7 @@ namespace battleship
             if (state == CellState.Hit || state == CellState.Miss)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Сюда уже стреляли. Выберите другую клетку.");
+                ShowInfo("Ð¡ÑŽÐ´Ð° ÑƒÐ¶Ðµ ÑÑ‚Ñ€ÐµÐ»ÑÐ»Ð¸. Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð´Ñ€ÑƒÐ³ÑƒÑŽ ÐºÐ»ÐµÑ‚ÐºÑƒ.");
                 return;
             }
 
@@ -803,25 +657,27 @@ namespace battleship
                     btnFinishSetup.Enabled = false;
                     btnFinishSetup.BackColor = Color.LightGray;
 
-                    string winner = shooter == Player.Player1 ? "Игрок 1" : "Игрок 2";
-                    ShowInfo($"Все корабли противника уничтожены. Победил {winner}!");
-                    MessageBox.Show(this, $"Победил {winner}!", "Игра окончена",
+                    string winner = shooter == Player.Player1 ? "Èãðîê 1" : "Èãðîê 2";
+                    ShowInfo($"Âñå êîðàáëè ïðîòèâíèêà óíè÷òîæåíû. Ïîáåäèë {winner}!");
+                    MessageBox.Show(this, $"Ïîáåäèë {winner}!", "Èãðà îêîí÷åíà",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
-                ShowInfo("Попадание! Стреляйте ещё по вражескому полю.");
+                // ÏÎÏÀÄÀÍÈÅ: õîä ïðîäîëæàåòñÿ, êíîïêó "Êîíåö õîäà" íå òðîãàåì
+                ShowInfo("Ïîïàäàíèå! Ñòðåëÿéòå åù¸ ïî âðàæåñêîìó ïîëþ.");
             }
             else if (state == CellState.Empty)
             {
                 targetBoard.Cells[x, y] = CellState.Miss;
                 RefreshBoardsVisual();
 
+                // ÏÐÎÌÀÕ: òåïåðü õîä ìîæíî çàâåðøàòü
                 shotMadeThisTurn = true;
                 btnFinishSetup.Enabled = true;
                 btnFinishSetup.BackColor = Color.LightGreen;
 
-                ShowInfo("Мимо. Нажмите \"Конец хода\", чтобы передать ход сопернику.");
+                ShowInfo("Ìèìî. Íàæìèòå \"Êîíåö õîäà\", ÷òîáû ïåðåäàòü õîä ñîïåðíèêó.");
             }
         }
 
@@ -829,38 +685,19 @@ namespace battleship
         {
             if (gameOver) return;
 
+            // Ãîòîâèì ïåðåêëþ÷åíèå õîäà
             pendingSwitch = PendingSwitchMode.NextTurnBattle;
 
+            // Êíîïêà "Êîíåö õîäà" ñòàíîâèòñÿ íåàêòèâíîé äî âûñòðåëà â íîâîì õîäó
             btnFinishSetup.Enabled = false;
             btnFinishSetup.BackColor = Color.LightGray;
 
-            string nextPlayerText = currentPlayer == Player.Player1 ? "Игрок 2" : "Игрок 1";
+            string nextPlayerText = currentPlayer == Player.Player1 ? "Èãðîê 2" : "Èãðîê 1";
 
             ShowSwitchPanel(
-                $"Ход переходит к: {nextPlayerText}.\n" +
-                "Передайте управление этому игроку.\n" +
-                "Нажмите \"Готово\", когда он будет готов к ходу.");
-        }
-
-        // ====== ОБРАБОТЧИКИ КНОПОК МЕНЮ ======
-
-        private void BtnMenuStandard_Click(object? sender, EventArgs e)
-        {
-            panelMenu.Visible = false;
-            gameMode = GameMode.Standard;
-            InitBoardsStandard();
-        }
-
-        private void BtnMenuCustom_Click(object? sender, EventArgs e)
-        {
-            panelMenu.Visible = false;
-            gameMode = GameMode.Custom;
-            InitBoards();
-        }
-
-        private void BtnMenuExit_Click(object? sender, EventArgs e)
-        {
-            Close();
+                $"Õîä ïåðåõîäèò ê: {nextPlayerText}.\n" +
+                "Ïåðåäàéòå óïðàâëåíèå ýòîìó èãðîêó.\n" +
+                "Íàæìèòå \"Ãîòîâî\", êîãäà îí áóäåò ãîòîâ ê õîäó.");
         }
     }
 }
