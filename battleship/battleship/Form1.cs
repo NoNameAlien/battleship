@@ -7,15 +7,15 @@ namespace battleship
 {
     public partial class Form1 : Form
     {
-        // ====== ГЉГЋГЌГ‘Г’ГЂГЌГ’Г› Г„Г‹Гџ ГђГЂГ‡ГЊГ…Г’ГЉГ€ ======
+        // ====== КОНСТАНТЫ ДЛЯ РАЗМЕТКИ ======
         const int CellSize = 30;
         const int CellGap = 1;
         const int FieldMarginX = 20;
         const int FieldMarginY = 30;
 
-        // ====== Г‚ГЌГ“Г’ГђГ…ГЌГЌГ€Г… Г’Г€ГЏГ› ======
+        // ====== ВНУТРЕННИЕ ТИПЫ ======
 
-        // Г‘Г®Г±ГІГ®ГїГ­ГЁГҐ ГЄГ«ГҐГІГЄГЁ
+        // Состояние клетки
         enum CellState
         {
             Empty,
@@ -24,90 +24,90 @@ namespace battleship
             Miss
         }
 
-        // ГђЛњГђВіГ‘в‚¬ГђВѕГђВє
+        // Игрок
         enum Player
         {
             Player1,
             Player2
         }
 
-        // Г”Г Г§Г  ГЁГЈГ°Г»
+        // Фаза игры
         enum GamePhase
         {
-            SetupP1,   // Г€ГЈГ°Г®ГЄ 1 Г°Г Г±Г±ГІГ ГўГ«ГїГҐГІ ГЄГ®Г°Г ГЎГ«ГЁ
-            SetupP2,   // Г€ГЈГ°Г®ГЄ 2 Г°Г Г±Г±ГІГ ГўГ«ГїГҐГІ ГЄГ®Г°Г ГЎГ«ГЁ
-            Battle     // ГЃГ®Г©
+            SetupP1,   // Игрок 1 расставляет корабли
+            SetupP2,   // Игрок 2 расставляет корабли
+            Battle     // Бой
         }
 
-        // Г”Г®Г°Г¬Г  ГЇГҐГ°ГҐГЄГ«ГѕГ·ГҐГ­ГЁГї ГµГ®Г¤Г /ГґГ Г§Г», ГЄГ®ГІГ®Г°Г Гї Г¦Г¤ВёГІ Г­Г Г¦Г ГІГЁГї "ГѓГ®ГІГ®ГўГ®"
+        // Форма переключения хода/фазы, которая ждёт нажатия "Готово"
         enum PendingSwitchMode
         {
             None,
-            ToSetupP2,      // ГЇГ®Г±Г«ГҐ Г°Г Г±Г±ГІГ Г­Г®ГўГЄГЁ Г€ГЈГ°Г®ГЄГ  1 вЂ“ ГЇГҐГ°ГҐГ©ГІГЁ ГЄ Г°Г Г±Г±ГІГ Г­Г®ГўГЄГҐ Г€ГЈГ°Г®ГЄГ  2
-            ToBattleP1,     // ГЇГ®Г±Г«ГҐ Г°Г Г±Г±ГІГ Г­Г®ГўГЄГЁ Г€ГЈГ°Г®ГЄГ  2 вЂ“ ГЇГҐГ°ГҐГ©ГІГЁ ГЄ ГЎГ®Гѕ, ГµГ®Г¤ Г€ГЈГ°Г®ГЄГ  1
-            NextTurnBattle  // ГЇГ®Г±Г«ГҐ "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г " вЂ“ ГЇГҐГ°ГҐГ©ГІГЁ ГЄ Г±Г«ГҐГ¤ГіГѕГ№ГҐГ¬Гі ГЁГЈГ°Г®ГЄГі Гў ГЎГ®Гѕ
+            ToSetupP2,      // после расстановки Игрока 1 – перейти к расстановке Игрока 2
+            ToBattleP1,     // после расстановки Игрока 2 – перейти к бою, ход Игрока 1
+            NextTurnBattle  // после "Конец хода" – перейти к следующему игроку в бою
         }
 
-        // Г€ГЈГ°Г®ГўГ®ГҐ ГЇГ®Г«ГҐ
+        // Игровое поле
         class Board
         {
             public const int Size = 10;
             public CellState[,] Cells = new CellState[Size, Size];
-            public int TotalShipCells;     // Г‘ВЃГђВєГђВѕГђВ»Г‘Е’ГђВєГђВѕ ГђВєГђВ»ГђВµГ‘вЂљГђВѕГђВє ГђВ·ГђВ°ГђВЅГ‘ВЏГ‘вЂљГђВѕ ГђВєГђВѕГ‘в‚¬ГђВ°ГђВ±ГђВ»Г‘ВЏГђВјГђВё
-            public int HitCount;           // Г‘ВЃГђВєГђВѕГђВ»Г‘Е’ГђВєГђВѕ ГђВєГђВ»ГђВµГ‘вЂљГђВѕГђВє Г‘Ж’ГђВ¶ГђВµ ГђВїГђВѕГђВґГђВ±ГђВёГ‘вЂљГђВѕ
+            public int TotalShipCells;     // сколько клеток занято кораблями
+            public int HitCount;           // сколько клеток уже подбито
 
             public bool AllShipsDestroyed => HitCount >= TotalShipCells;
         }
 
-        // ====== ГЏГЋГ‹Гџ Г‘ГЋГ‘Г’ГЋГџГЌГ€Гџ Г€ Г€ГЌГ’Г…ГђГ”Г…Г‰Г‘ГЂ ======
+        // ====== ПОЛЯ СОСТОЯНИЯ И ИНТЕРФЕЙСА ======
 
-        // Г€ГЈГ°Г®ГўГ®ГҐ Г±Г®Г±ГІГ®ГїГ­ГЁГҐ
-        Board board1 = new Board();   // ГЇГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  1
-        Board board2 = new Board();   // ГЇГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  2
+        // Игровое состояние
+        Board board1 = new Board();   // поле игрока 1
+        Board board2 = new Board();   // поле игрока 2
         Player currentPlayer = Player.Player1;
         GamePhase phase = GamePhase.SetupP1;
         PendingSwitchMode pendingSwitch = PendingSwitchMode.None;
         bool gameOver = false;
 
-        // ГЃГ»Г« Г«ГЁ ГіГ¦ГҐ Г±Г¤ГҐГ«Г Г­ ГўГ»Г±ГІГ°ГҐГ« Гў ГІГҐГЄГіГ№ГҐГ¬ ГµГ®Г¤Гі
+        // Был ли уже сделан выстрел в текущем ходу
         bool shotMadeThisTurn = false;
 
-        // ГЉГ­Г®ГЇГЄГЁ Г¤Г«Гї Г®ГІГ®ГЎГ°Г Г¦ГҐГ­ГЁГї ГЇГ®Г«ГҐГ©
+        // Кнопки для отображения полей
         Button[,] buttonsP1 = new Button[Board.Size, Board.Size];
         Button[,] buttonsP2 = new Button[Board.Size, Board.Size];
 
-        // ГќГ«ГҐГ¬ГҐГ­ГІГ» UI
+        // Элементы UI
         Label lblCurrentPlayer;
         Label lblInfo;
         GroupBox groupP1;
         GroupBox groupP2;
 
-        // ГЉГ­Г®ГЇГЄГ  "Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі" / "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г "
+        // Кнопка "Завершить расстановку" / "Конец хода"
         Button btnFinishSetup;
 
-        // ГЏГ Г­ГҐГ«Гј "ГЏГҐГ°ГҐГ¤Г Г©ГІГҐ ГµГ®Г¤ Г¤Г°ГіГЈГ®Г¬Гі ГЁГЈГ°Г®ГЄГі"
+        // Панель "Передайте ход другому игроку"
         Panel panelSwitch;
         Label lblSwitchMessage;
         Button btnSwitchOk;
 
         public Form1()
         {
-            InitializeComponent(); // ГЄГ®Г¤ ГЁГ§ Form1.Designer.cs
+            InitializeComponent(); // код из Form1.Designer.cs
 
-            this.Text = "ГђЕ“ГђВѕГ‘в‚¬Г‘ВЃГђВєГђВѕГђВ№ ГђВ±ГђВѕГђВ№ - Г‘вЂЎГђВµГђВ»ГђВѕГђВІГђВµГђВє ГђВїГ‘в‚¬ГђВѕГ‘вЂљГђВёГђВІ Г‘вЂЎГђВµГђВ»ГђВѕГђВІГђВµГђВєГђВ°";
+            this.Text = "Морской бой - человек против человека";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MaximizeBox = false;
 
             CreateUi();
-            CreateMainMenu();
-            ShowMainMenu();
+            InitBoards();
+            UpdateCurrentPlayerLabel();
         }
 
-        // ====== Г‘ГЋГ‡Г„ГЂГЌГ€Г… Г€ГЌГ’Г…ГђГ”Г…Г‰Г‘ГЂ ======
+        // ====== СОЗДАНИЕ ИНТЕРФЕЙСА ======
 
         private void CreateUi()
         {
-            // ГђЕ“ГђВµГ‘вЂљГђВєГђВ° "ГђВ§ГђВµГђВ№ Г‘вЂ¦ГђВѕГђВґ"
+            // Метка "Чей ход"
             lblCurrentPlayer = new Label
             {
                 AutoSize = true,
@@ -116,7 +116,7 @@ namespace battleship
             };
             this.Controls.Add(lblCurrentPlayer);
 
-            // ГђЛњГђВЅГ‘вЂћГђВѕГ‘в‚¬ГђВјГђВ°Г‘вЂ ГђВёГђВѕГђВЅГђВЅГђВ°Г‘ВЏ Г‘ВЃГ‘вЂљГ‘в‚¬ГђВѕГђВєГђВ° (Г‘ВЃГђВѕГђВѕГђВ±Г‘вЂ°ГђВµГђВЅГђВёГ‘ВЏ ГђВѕГђВ± ГђВѕГ‘Л†ГђВёГђВ±ГђВєГђВ°Г‘вЂ¦ ГђВё Г‘вЂљ.ГђВї.)
+            // Информационная строка (сообщения об ошибках и т.п.)
             lblInfo = new Label
             {
                 AutoSize = false,
@@ -127,39 +127,39 @@ namespace battleship
             };
             this.Controls.Add(lblInfo);
 
-            // ГђГ Г§Г¬ГҐГ°Г» Г°Г Г¬ГЄГЁ ГЇГ®Г«Гї Гў Г§Г ГўГЁГ±ГЁГ¬Г®Г±ГІГЁ Г®ГІ Г±ГҐГІГЄГЁ
+            // Размеры рамки поля в зависимости от сетки
             int fieldWidth = FieldMarginX * 2 + Board.Size * CellSize + (Board.Size - 1) * CellGap;
             int fieldHeight = FieldMarginY + Board.Size * CellSize + (Board.Size - 1) * CellGap + 20;
 
-            // ГѓГ°ГіГЇГЇГ  Г¤Г«Гї ГЇГ®Г«Гї Г€ГЈГ°Г®ГЄГ  1
+            // Группа для поля Игрока 1
             groupP1 = new GroupBox
             {
-                Text = "ГЏГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  1",
+                Text = "Поле игрока 1",
                 Location = new Point(20, 80),
                 Size = new Size(fieldWidth, fieldHeight)
             };
             this.Controls.Add(groupP1);
 
-            // ГѓГ°ГіГЇГЇГ  Г¤Г«Гї ГЇГ®Г«Гї Г€ГЈГ°Г®ГЄГ  2
+            // Группа для поля Игрока 2
             groupP2 = new GroupBox
             {
-                Text = "ГЏГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  2",
+                Text = "Поле игрока 2",
                 Location = new Point(450, 80),
                 Size = new Size(fieldWidth, fieldHeight)
             };
             this.Controls.Add(groupP2);
 
-            // ГЉГ­Г®ГЇГЄГ  "Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі" Г¤Г«Гї ГґГ Г§ Г°Г Г±Г±ГІГ Г­Г®ГўГЄГЁ ГЁ "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г " Гў ГЎГ®Гѕ
+            // Кнопка "Завершить расстановку" для фаз расстановки и "Конец хода" в бою
             btnFinishSetup = new Button
             {
-                Text = "Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі",
+                Text = "Завершить расстановку",
                 Location = new Point(360, 10),
                 AutoSize = true
             };
             btnFinishSetup.Click += BtnFinishSetup_Click;
             this.Controls.Add(btnFinishSetup);
 
-            // Г‘Г®Г§Г¤Г ВёГ¬ Г±ГҐГІГЄГЁ ГЄГ­Г®ГЇГ®ГЄ 10x10
+            // Создаём сетки кнопок 10x10
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -167,19 +167,19 @@ namespace battleship
                     int bx = FieldMarginX + x * (CellSize + CellGap);
                     int by = FieldMarginY + y * (CellSize + CellGap);
 
-                    // ГЉГ­Г®ГЇГЄГЁ Г¤Г«Гї ГЇГ®Г«Гї ГЁГЈГ°Г®ГЄГ  1
+                    // Кнопки для поля игрока 1
                     var btn1 = new Button
                     {
                         Width = CellSize,
                         Height = CellSize,
                         Location = new Point(bx, by),
-                        Tag = new Point(x, y) // Г§Г ГЇГ®Г¬ГЁГ­Г ГҐГ¬ ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ»
+                        Tag = new Point(x, y) // запоминаем координаты
                     };
                     btn1.Click += Player1BoardClick;
                     groupP1.Controls.Add(btn1);
                     buttonsP1[x, y] = btn1;
 
-                    // ГђЕЎГђВЅГђВѕГђВїГђВєГђВё ГђВґГђВ»Г‘ВЏ ГђВїГђВѕГђВ»Г‘ВЏ ГђВёГђВіГ‘в‚¬ГђВѕГђВєГђВ° 2
+                    // Кнопки для поля игрока 2
                     var btn2 = new Button
                     {
                         Width = CellSize,
@@ -193,7 +193,7 @@ namespace battleship
                 }
             }
 
-            // ГЏГ Г­ГҐГ«Гј "ГЏГҐГ°ГҐГ¤Г Г©ГІГҐ ГµГ®Г¤"
+            // Панель "Передайте ход"
             panelSwitch = new Panel
             {
                 Size = new Size(400, 150),
@@ -217,7 +217,7 @@ namespace battleship
 
             btnSwitchOk = new Button
             {
-                Text = "ГѓГ®ГІГ®ГўГ®",
+                Text = "Готово",
                 Width = 80,
                 Height = 30,
                 Location = new Point((panelSwitch.Width - 80) / 2, panelSwitch.Height - 50)
@@ -229,28 +229,28 @@ namespace battleship
             panelSwitch.BringToFront();
         }
 
-        // ====== Г€ГЌГ€Г–Г€ГЂГ‹Г€Г‡ГЂГ–Г€Гџ Г€ГѓГђГ› ======
+        // ====== ИНИЦИАЛИЗАЦИЯ ИГРЫ ======
 
         private void InitBoards()
         {
             ClearBoard(board1);
             ClearBoard(board2);
 
-            // Г‘ГІГ Г°ГІГіГҐГ¬ Г± Г°Г Г±Г±ГІГ Г­Г®ГўГЄГЁ Г€ГЈГ°Г®ГЄГ  1
+            // Стартуем с расстановки Игрока 1
             phase = GamePhase.SetupP1;
             currentPlayer = Player.Player1;
             gameOver = false;
             shotMadeThisTurn = false;
 
             btnFinishSetup.Enabled = true;
-            btnFinishSetup.Text = "Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі";
+            btnFinishSetup.Text = "Завершить расстановку";
             btnFinishSetup.BackColor = Color.LightYellow;
 
             UpdateCurrentPlayerLabel();
             UpdateGroupTitles();
             RefreshBoardsVisual();
-            ShowInfo("Г€ГЈГ°Г®ГЄ 1: Г°Г Г±Г±ГІГ ГўГјГІГҐ Г±ГўГ®ГЁ ГЄГ®Г°Г ГЎГ«ГЁ Г­Г  Г«ГҐГўГ®Г¬ ГЇГ®Г«ГҐ. " +
-                     "ГЉГ«ГЁГЄ вЂ“ ГЇГ®Г±ГІГ ГўГЁГІГј/ГіГЎГ°Г ГІГј ГЇГ Г«ГіГЎГі. Г‡Г ГІГҐГ¬ Г­Г Г¦Г¬ГЁГІГҐ \"Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі\".");
+            ShowInfo("Игрок 1: расставьте свои корабли на левом поле. " +
+                     "Клик – поставить/убрать палубу. Затем нажмите \"Завершить расстановку\".");
             panelSwitch.Visible = false;
         }
 
@@ -264,10 +264,10 @@ namespace battleship
             b.HitCount = 0;
         }
 
-        // ГЏГҐГ°ГҐГЄГ«ГѕГ·ГҐГ­ГЁГҐ Г®ГІГ®ГЎГ°Г Г¦ГҐГ­ГЁГї ГЇГ®Г«ГҐГ©
+        // Переключение отображения полей
         private void RefreshBoardsVisual()
         {
-            // ГЏГ®Г«ГҐ Г€ГЈГ°Г®ГЄГ  1 (Г«ГҐГўГ®ГҐ)
+            // Поле Игрока 1 (левое)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -292,7 +292,7 @@ namespace battleship
                 }
             }
 
-            // ГЏГ®Г«ГҐ Г€ГЈГ°Г®ГЄГ  2 (ГЇГ°Г ГўГ®ГҐ)
+            // Поле Игрока 2 (правое)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -318,10 +318,10 @@ namespace battleship
             }
         }
 
-        // ГЊГ Г±ГЄГЁГ°ГіГҐГ¬ Г®ГЎГ  ГЇГ®Г«Гї, Г·ГІГ®ГЎГ» ГЇГ°ГЁ ГЇГҐГ°ГҐГ¤Г Г·ГҐ ГµГ®Г¤Г  Г­ГҐГ«ГјГ§Гї ГЎГ»Г«Г® Г­ГЁГ·ГҐГЈГ® ГЇГ®Г¤Г±Г¬Г ГІГ°ГЁГўГ ГІГј
+        // Маскируем оба поля, чтобы при передаче хода нельзя было ничего подсматривать
         private void MaskBoardsVisual()
         {
-            // Г‹ГҐГўГ®ГҐ ГЇГ®Г«ГҐ (Г€ГЈГ°Г®ГЄ 1)
+            // Левое поле (Игрок 1)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -330,7 +330,7 @@ namespace battleship
                 }
             }
 
-            // ГЏГ°Г ГўГ®ГҐ ГЇГ®Г«ГҐ (Г€ГЈГ°Г®ГЄ 2)
+            // Правое поле (Игрок 2)
             for (int y = 0; y < Board.Size; y++)
             {
                 for (int x = 0; x < Board.Size; x++)
@@ -342,60 +342,33 @@ namespace battleship
 
         private void UpdateCurrentPlayerLabel()
         {
-            string playerText = currentPlayer == Player.Player1 ? "ГђЛњГђВіГ‘в‚¬ГђВѕГђВє 1" : "ГђЛњГђВіГ‘в‚¬ГђВѕГђВє 2";
-            lblCurrentPlayer.Text = $"ГђВҐГђВѕГђВґ: {playerText}";
+            string playerText = currentPlayer == Player.Player1 ? "Игрок 1" : "Игрок 2";
+            lblCurrentPlayer.Text = $"Ход: {playerText}";
         }
 
         private void UpdateGroupTitles()
         {
             if (phase == GamePhase.SetupP1)
             {
-                groupP1.Text = "ГђЕёГђВѕГђВ»ГђВµ ГђВёГђВіГ‘в‚¬ГђВѕГђВєГђВ° 1 (Г‘в‚¬ГђВ°Г‘ВЃГ‘ВЃГ‘вЂљГђВ°ГђВЅГђВѕГђВІГђВєГђВ°)";
-                groupP2.Text = "ГђЕёГђВѕГђВ»ГђВµ ГђВёГђВіГ‘в‚¬ГђВѕГђВєГђВ° 2 (ГђВѕГђВ¶ГђВёГђВґГђВ°ГђВЅГђВёГђВµ)";
+                groupP1.Text = "Поле игрока 1 (расстановка)";
+                groupP2.Text = "Поле игрока 2 (ожидание)";
             }
             else if (phase == GamePhase.SetupP2)
             {
-                groupP1.Text = "ГђЕёГђВѕГђВ»ГђВµ ГђВёГђВіГ‘в‚¬ГђВѕГђВєГђВ° 1 (ГђВѕГђВ¶ГђВёГђВґГђВ°ГђВЅГђВёГђВµ)";
-                groupP2.Text = "ГђЕёГђВѕГђВ»ГђВµ ГђВёГђВіГ‘в‚¬ГђВѕГђВєГђВ° 2 (Г‘в‚¬ГђВ°Г‘ВЃГ‘ВЃГ‘вЂљГђВ°ГђВЅГђВѕГђВІГђВєГђВ°)";
+                groupP1.Text = "Поле игрока 1 (ожидание)";
+                groupP2.Text = "Поле игрока 2 (расстановка)";
             }
             else // Battle
             {
                 if (currentPlayer == Player.Player1)
                 {
-                    groupP1.Text = "ГђВЎГђВІГђВѕГ‘вЂ ГђВїГђВѕГђВ»ГђВµ";
-                    groupP2.Text = "ГђЕёГђВѕГђВ»ГђВµ ГђВїГ‘в‚¬ГђВѕГ‘вЂљГђВёГђВІГђВЅГђВёГђВєГђВ°";
+                    groupP1.Text = "Своё поле";
+                    groupP2.Text = "Поле противника";
                 }
                 else
                 {
-                    groupP1.Text = "ГђЕёГђВѕГђВ»ГђВµ ГђВїГ‘в‚¬ГђВѕГ‘вЂљГђВёГђВІГђВЅГђВёГђВєГђВ°";
-                    groupP2.Text = "ГђВЎГђВІГђВѕГ‘вЂ ГђВїГђВѕГђВ»ГђВµ";
-                }
-            }
-        }
-
-        private void UpdateGroupTitles()
-        {
-            if (phase == GamePhase.SetupP1)
-            {
-                groupP1.Text = "ГЏГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  1 (Г°Г Г±Г±ГІГ Г­Г®ГўГЄГ )";
-                groupP2.Text = "ГЏГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  2 (Г®Г¦ГЁГ¤Г Г­ГЁГҐ)";
-            }
-            else if (phase == GamePhase.SetupP2)
-            {
-                groupP1.Text = "ГЏГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  1 (Г®Г¦ГЁГ¤Г Г­ГЁГҐ)";
-                groupP2.Text = "ГЏГ®Г«ГҐ ГЁГЈГ°Г®ГЄГ  2 (Г°Г Г±Г±ГІГ Г­Г®ГўГЄГ )";
-            }
-            else // Battle
-            {
-                if (currentPlayer == Player.Player1)
-                {
-                    groupP1.Text = "Г‘ГўГ®Вё ГЇГ®Г«ГҐ";
-                    groupP2.Text = "ГЏГ®Г«ГҐ ГЇГ°Г®ГІГЁГўГ­ГЁГЄГ ";
-                }
-                else
-                {
-                    groupP1.Text = "ГЏГ®Г«ГҐ ГЇГ°Г®ГІГЁГўГ­ГЁГЄГ ";
-                    groupP2.Text = "Г‘ГўГ®Вё ГЇГ®Г«ГҐ";
+                    groupP1.Text = "Поле противника";
+                    groupP2.Text = "Своё поле";
                 }
             }
         }
@@ -405,7 +378,7 @@ namespace battleship
             lblInfo.Text = message;
         }
 
-        // ====== ГђГЂГ‘Г‘Г’ГЂГЌГЋГ‚ГЉГЂ ГЉГЋГђГЂГЃГ‹Г…Г‰ ======
+        // ====== РАССТАНОВКА КОРАБЛЕЙ ======
 
         private void ToggleShip(Board b, int x, int y)
         {
@@ -429,30 +402,30 @@ namespace battleship
                 if (board1.TotalShipCells == 0)
                 {
                     SystemSounds.Beep.Play();
-                    ShowInfo("Г“ Г€ГЈГ°Г®ГЄГ  1 Г­ГҐГІ Г­ГЁ Г®Г¤Г­Г®ГЈГ® ГЄГ®Г°Г ГЎГ«Гї. ГђГ Г±Г±ГІГ ГўГјГІГҐ ГµГ®ГІГї ГЎГ» Г®Г¤ГЁГ­.");
+                    ShowInfo("У Игрока 1 нет ни одного корабля. Расставьте хотя бы один.");
                     return;
                 }
 
-                // ГЌГҐ ГЇГҐГ°ГҐГЄГ«ГѕГ·Г ГҐГ¬ ГґГ Г§Гі ГЁ ГЁГЈГ°Г®ГЄГ  Г±Г°Г Г§Гі вЂ“ ГІГ®Г«ГјГЄГ® Г±ГІГ ГўГЁГ¬ Гў Г®Г·ГҐГ°ГҐГ¤Гј
+                // Не переключаем фазу и игрока сразу – только ставим в очередь
                 pendingSwitch = PendingSwitchMode.ToSetupP2;
 
-                ShowSwitchPanel("ГЏГҐГ°ГҐГ¤Г Г©ГІГҐ ГіГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г€ГЈГ°Г®ГЄГі 2.\n" +
-                                "ГЌГ Г¦Г¬ГЁГІГҐ \"ГѓГ®ГІГ®ГўГ®\", ГЄГ®ГЈГ¤Г  Г€ГЈГ°Г®ГЄ 2 ГЎГіГ¤ГҐГІ ГЈГ®ГІГ®Гў ГЄ Г°Г Г±Г±ГІГ Г­Г®ГўГЄГҐ.");
+                ShowSwitchPanel("Передайте управление Игроку 2.\n" +
+                                "Нажмите \"Готово\", когда Игрок 2 будет готов к расстановке.");
             }
             else if (phase == GamePhase.SetupP2)
             {
                 if (board2.TotalShipCells == 0)
                 {
                     SystemSounds.Beep.Play();
-                    ShowInfo("Г“ Г€ГЈГ°Г®ГЄГ  2 Г­ГҐГІ Г­ГЁ Г®Г¤Г­Г®ГЈГ® ГЄГ®Г°Г ГЎГ«Гї. ГђГ Г±Г±ГІГ ГўГјГІГҐ ГµГ®ГІГї ГЎГ» Г®Г¤ГЁГ­.");
+                    ShowInfo("У Игрока 2 нет ни одного корабля. Расставьте хотя бы один.");
                     return;
                 }
 
-                // ГЏГҐГ°ГҐГµГ®Г¤ ГЄ ГЎГ®Гѕ вЂ“ ГІГ®Г¦ГҐ Г®ГІГЄГ«Г Г¤Г»ГўГ ГҐГ¬ Г¤Г® Г­Г Г¦Г ГІГЁГї "ГѓГ®ГІГ®ГўГ®"
+                // Переход к бою – тоже откладываем до нажатия "Готово"
                 pendingSwitch = PendingSwitchMode.ToBattleP1;
 
-                ShowSwitchPanel("ГЏГҐГ°ГҐГ¤Г Г©ГІГҐ ГіГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г€ГЈГ°Г®ГЄГі 1.\n" +
-                                "ГЌГ Г¦Г¬ГЁГІГҐ \"ГѓГ®ГІГ®ГўГ®\", ГЄГ®ГЈГ¤Г  Г€ГЈГ°Г®ГЄ 1 ГЎГіГ¤ГҐГІ ГЈГ®ГІГ®Гў Г­Г Г·Г ГІГј ГЎГ®Г©.");
+                ShowSwitchPanel("Передайте управление Игроку 1.\n" +
+                                "Нажмите \"Готово\", когда Игрок 1 будет готов начать бой.");
             }
             else if (phase == GamePhase.Battle)
             {
@@ -462,20 +435,20 @@ namespace battleship
                     return;
                 }
 
-                // shotMadeThisTurn == true ГІГҐГЇГҐГ°Гј Г®Г§Г­Г Г·Г ГҐГІ, Г·ГІГ® ГіГ¦ГҐ ГЎГ»Г« ГЏГђГЋГЊГЂГ•
+                // shotMadeThisTurn == true теперь означает, что уже был ПРОМАХ
                 if (!shotMadeThisTurn)
                 {
                     SystemSounds.Beep.Play();
-                    ShowInfo("Г•Г®Г¤ ГҐГ№Вё Г­ГҐ Г§Г ГўГҐГ°ГёВёГ­. Г‘Г¤ГҐГ«Г Г©ГІГҐ ГўГ»Г±ГІГ°ГҐГ« ГЁ ГЇГ°ГЁ ГЇГ°Г®Г¬Г ГµГҐ Г­Г Г¦Г¬ГЁГІГҐ \"ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г \".");
+                    ShowInfo("Ход ещё не завершён. Сделайте выстрел и при промахе нажмите \"Конец хода\".");
                     return;
                 }
 
-                // Г‡Г ГўГҐГ°ГёГҐГ­ГЁГҐ ГµГ®Г¤Г  ГўГ°ГіГ·Г­ГіГѕ вЂ“ ГІГ®Г«ГјГЄГ® Г±ГІГ ГўГЁГ¬ Гў Г®Г·ГҐГ°ГҐГ¤Гј ГЇГҐГ°ГҐГЄГ«ГѕГ·ГҐГ­ГЁГҐ
+                // Завершение хода вручную – только ставим в очередь переключение
                 SwitchPlayer();
             }
         }
 
-        // ====== ГЏГЂГЌГ…Г‹Гњ ГЏГ…ГђГ…Г„ГЂГ—Г€ Г•ГЋГ„ГЂ ======
+        // ====== ПАНЕЛЬ ПЕРЕДАЧИ ХОДА ======
 
         private void ShowSwitchPanel(string message)
         {
@@ -493,14 +466,14 @@ namespace battleship
         {
             panelSwitch.Visible = false;
 
-            // Г‚Г»ГЇГ®Г«Г­ГїГҐГ¬ Г®ГІГ«Г®Г¦ГҐГ­Г­Г®ГҐ ГЇГҐГ°ГҐГЄГ«ГѕГ·ГҐГ­ГЁГҐ
+            // Выполняем отложенное переключение
             if (pendingSwitch == PendingSwitchMode.ToSetupP2)
             {
                 phase = GamePhase.SetupP2;
                 currentPlayer = Player.Player2;
                 shotMadeThisTurn = false;
 
-                btnFinishSetup.Text = "Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі";
+                btnFinishSetup.Text = "Завершить расстановку";
                 btnFinishSetup.Enabled = true;
                 btnFinishSetup.BackColor = Color.LightYellow;
 
@@ -508,8 +481,8 @@ namespace battleship
                 UpdateGroupTitles();
                 RefreshBoardsVisual();
 
-                ShowInfo("Г€ГЈГ°Г®ГЄ 2: Г°Г Г±Г±ГІГ ГўГјГІГҐ Г±ГўГ®ГЁ ГЄГ®Г°Г ГЎГ«ГЁ Г­Г  ГЇГ°Г ГўГ®Г¬ ГЇГ®Г«ГҐ. " +
-                         "ГЉГ«ГЁГЄ вЂ“ ГЇГ®Г±ГІГ ГўГЁГІГј/ГіГЎГ°Г ГІГј ГЇГ Г«ГіГЎГі. Г‡Г ГІГҐГ¬ Г­Г Г¦Г¬ГЁГІГҐ \"Г‡Г ГўГҐГ°ГёГЁГІГј Г°Г Г±Г±ГІГ Г­Г®ГўГЄГі\".");
+                ShowInfo("Игрок 2: расставьте свои корабли на правом поле. " +
+                         "Клик – поставить/убрать палубу. Затем нажмите \"Завершить расстановку\".");
             }
             else if (pendingSwitch == PendingSwitchMode.ToBattleP1)
             {
@@ -518,7 +491,7 @@ namespace battleship
                 gameOver = false;
                 shotMadeThisTurn = false;
 
-                btnFinishSetup.Text = "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г ";
+                btnFinishSetup.Text = "Конец хода";
                 btnFinishSetup.Enabled = false;
                 btnFinishSetup.BackColor = Color.LightGray;
 
@@ -526,11 +499,11 @@ namespace battleship
                 UpdateGroupTitles();
                 RefreshBoardsVisual();
 
-                ShowInfo("ГЃГ®Г© Г­Г Г·Г Г«Г±Гї. Г€ГЈГ°Г®ГЄ 1 Г±ГІГ°ГҐГ«ГїГҐГІ ГЇГ® ГўГ°Г Г¦ГҐГ±ГЄГ®Г¬Гі ГЇГ®Г«Гѕ (Г±ГЇГ°Г ГўГ ).");
+                ShowInfo("Бой начался. Игрок 1 стреляет по вражескому полю (справа).");
             }
             else if (pendingSwitch == PendingSwitchMode.NextTurnBattle)
             {
-                // Г’Г®Г«ГјГЄГ® ГІГҐГЇГҐГ°Гј Г°ГҐГ Г«ГјГ­Г® Г¬ГҐГ­ГїГҐГ¬ ГЁГЈГ°Г®ГЄГ 
+                // Только теперь реально меняем игрока
                 currentPlayer = currentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
                 shotMadeThisTurn = false;
 
@@ -542,15 +515,15 @@ namespace battleship
                 RefreshBoardsVisual();
 
                 if (currentPlayer == Player.Player1)
-                    ShowInfo("Г€ГЈГ°Г®ГЄ 1: Г±Г¤ГҐГ«Г Г©ГІГҐ Г®Г¤ГЁГ­ ГўГ»Г±ГІГ°ГҐГ« ГЇГ® ГўГ°Г Г¦ГҐГ±ГЄГ®Г¬Гі ГЇГ®Г«Гѕ (Г±ГЇГ°Г ГўГ ).");
+                    ShowInfo("Игрок 1: сделайте один выстрел по вражескому полю (справа).");
                 else
-                    ShowInfo("Г€ГЈГ°Г®ГЄ 2: Г±Г¤ГҐГ«Г Г©ГІГҐ Г®Г¤ГЁГ­ ГўГ»Г±ГІГ°ГҐГ« ГЇГ® ГўГ°Г Г¦ГҐГ±ГЄГ®Г¬Гі ГЇГ®Г«Гѕ (Г±Г«ГҐГўГ ).");
+                    ShowInfo("Игрок 2: сделайте один выстрел по вражескому полю (слева).");
             }
 
             pendingSwitch = PendingSwitchMode.None;
         }
 
-        // ====== ГЋГЃГђГЂГЃГЋГ’ГЉГЂ ГЉГ‹Г€ГЉГЋГ‚ ГЏГЋ ГЏГЋГ‹ГџГЊ ======
+        // ====== ОБРАБОТКА КЛИКОВ ПО ПОЛЯМ ======
 
         private void Player1BoardClick(object? sender, EventArgs e)
         {
@@ -576,11 +549,11 @@ namespace battleship
                 return;
             }
 
-            // Г‚ ГЎГ®Гѕ ГЇГ® ГЇГ®Г«Гѕ Г€ГЈГ°Г®ГЄГ  1 Г¬Г®Г¦ГҐГІ Г±ГІГ°ГҐГ«ГїГІГј ГІГ®Г«ГјГЄГ® Г€ГЈГ°Г®ГЄ 2
+            // В бою по полю Игрока 1 может стрелять только Игрок 2
             if (currentPlayer != Player.Player2)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Г‘ГҐГ©Г·Г Г± ГµГ®Г¤ Г€ГЈГ°Г®ГЄГ  1 вЂ“ Г®Г­ Г±ГІГ°ГҐГ«ГїГҐГІ ГЇГ® ГўГ°Г Г¦ГҐГ±ГЄГ®Г¬Гі ГЇГ®Г«Гѕ Г±ГЇГ°Г ГўГ .");
+                ShowInfo("Сейчас ход Игрока 1 – он стреляет по вражескому полю справа.");
                 return;
             }
 
@@ -611,28 +584,28 @@ namespace battleship
                 return;
             }
 
-            // Г‚ ГЎГ®Гѕ ГЇГ® ГЇГ®Г«Гѕ Г€ГЈГ°Г®ГЄГ  2 Г¬Г®Г¦ГҐГІ Г±ГІГ°ГҐГ«ГїГІГј ГІГ®Г«ГјГЄГ® Г€ГЈГ°Г®ГЄ 1
+            // В бою по полю Игрока 2 может стрелять только Игрок 1
             if (currentPlayer != Player.Player1)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Г‘ГҐГ©Г·Г Г± ГµГ®Г¤ Г€ГЈГ°Г®ГЄГ  2 вЂ“ Г®Г­ Г±ГІГ°ГҐГ«ГїГҐГІ ГЇГ® ГўГ°Г Г¦ГҐГ±ГЄГ®Г¬Гі ГЇГ®Г«Гѕ Г±Г«ГҐГўГ .");
+                ShowInfo("Сейчас ход Игрока 2 – он стреляет по вражескому полю слева.");
                 return;
             }
 
             ProcessShot(board2, buttonsP2, x, y, shooter: Player.Player1);
         }
 
-        // ====== Г‹ГЋГѓГ€ГЉГЂ Г‚Г›Г‘Г’ГђГ…Г‹ГЂ ======
+        // ====== ЛОГИКА ВЫСТРЕЛА ======
         private void ProcessShot(Board targetBoard, Button[,] targetButtons, int x, int y, Player shooter)
         {
             if (phase != GamePhase.Battle) return;
 
-            // shotMadeThisTurn == true ГІГҐГЇГҐГ°Гј Г§Г­Г Г·ГЁГІ, Г·ГІГ® Гў ГЅГІГ®Г¬ ГµГ®Г¤Гі ГіГ¦ГҐ ГЎГ»Г« ГЏГђГЋГЊГЂГ•,
-            // ГЁ Г­Г Г¤Г® ГІГ®Г«ГјГЄГ® Г­Г Г¦Г ГІГј "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г "
+            // shotMadeThisTurn == true теперь значит, что в этом ходу уже был ПРОМАХ,
+            // и надо только нажать "Конец хода"
             if (shotMadeThisTurn)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("Г‚Г» ГіГ¦ГҐ ГЇГ°Г®Г¬Г ГµГ­ГіГ«ГЁГ±Гј Гў ГЅГІГ®Г¬ ГµГ®Г¤Гі. ГЌГ Г¦Г¬ГЁГІГҐ \"ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г \", Г·ГІГ®ГЎГ» ГЇГҐГ°ГҐГ¤Г ГІГј ГµГ®Г¤.");
+                ShowInfo("Вы уже промахнулись в этом ходу. Нажмите \"Конец хода\", чтобы передать ход.");
                 return;
             }
 
@@ -641,7 +614,7 @@ namespace battleship
             if (state == CellState.Hit || state == CellState.Miss)
             {
                 SystemSounds.Beep.Play();
-                ShowInfo("ГђВЎГ‘ЕЅГђВґГђВ° Г‘Ж’ГђВ¶ГђВµ Г‘ВЃГ‘вЂљГ‘в‚¬ГђВµГђВ»Г‘ВЏГђВ»ГђВё. ГђвЂ™Г‘вЂ№ГђВ±ГђВµГ‘в‚¬ГђВёГ‘вЂљГђВµ ГђВґГ‘в‚¬Г‘Ж’ГђВіГ‘Ж’Г‘ЕЅ ГђВєГђВ»ГђВµГ‘вЂљГђВєГ‘Ж’.");
+                ShowInfo("Сюда уже стреляли. Выберите другую клетку.");
                 return;
             }
 
@@ -657,27 +630,27 @@ namespace battleship
                     btnFinishSetup.Enabled = false;
                     btnFinishSetup.BackColor = Color.LightGray;
 
-                    string winner = shooter == Player.Player1 ? "Г€ГЈГ°Г®ГЄ 1" : "Г€ГЈГ°Г®ГЄ 2";
-                    ShowInfo($"Г‚Г±ГҐ ГЄГ®Г°Г ГЎГ«ГЁ ГЇГ°Г®ГІГЁГўГ­ГЁГЄГ  ГіГ­ГЁГ·ГІГ®Г¦ГҐГ­Г». ГЏГ®ГЎГҐГ¤ГЁГ« {winner}!");
-                    MessageBox.Show(this, $"ГЏГ®ГЎГҐГ¤ГЁГ« {winner}!", "Г€ГЈГ°Г  Г®ГЄГ®Г­Г·ГҐГ­Г ",
+                    string winner = shooter == Player.Player1 ? "Игрок 1" : "Игрок 2";
+                    ShowInfo($"Все корабли противника уничтожены. Победил {winner}!");
+                    MessageBox.Show(this, $"Победил {winner}!", "Игра окончена",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
-                // ГЏГЋГЏГЂГ„ГЂГЌГ€Г…: ГµГ®Г¤ ГЇГ°Г®Г¤Г®Г«Г¦Г ГҐГІГ±Гї, ГЄГ­Г®ГЇГЄГі "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г " Г­ГҐ ГІГ°Г®ГЈГ ГҐГ¬
-                ShowInfo("ГЏГ®ГЇГ Г¤Г Г­ГЁГҐ! Г‘ГІГ°ГҐГ«ГїГ©ГІГҐ ГҐГ№Вё ГЇГ® ГўГ°Г Г¦ГҐГ±ГЄГ®Г¬Гі ГЇГ®Г«Гѕ.");
+                // ПОПАДАНИЕ: ход продолжается, кнопку "Конец хода" не трогаем
+                ShowInfo("Попадание! Стреляйте ещё по вражескому полю.");
             }
             else if (state == CellState.Empty)
             {
                 targetBoard.Cells[x, y] = CellState.Miss;
                 RefreshBoardsVisual();
 
-                // ГЏГђГЋГЊГЂГ•: ГІГҐГЇГҐГ°Гј ГµГ®Г¤ Г¬Г®Г¦Г­Г® Г§Г ГўГҐГ°ГёГ ГІГј
+                // ПРОМАХ: теперь ход можно завершать
                 shotMadeThisTurn = true;
                 btnFinishSetup.Enabled = true;
                 btnFinishSetup.BackColor = Color.LightGreen;
 
-                ShowInfo("ГЊГЁГ¬Г®. ГЌГ Г¦Г¬ГЁГІГҐ \"ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г \", Г·ГІГ®ГЎГ» ГЇГҐГ°ГҐГ¤Г ГІГј ГµГ®Г¤ Г±Г®ГЇГҐГ°Г­ГЁГЄГі.");
+                ShowInfo("Мимо. Нажмите \"Конец хода\", чтобы передать ход сопернику.");
             }
         }
 
@@ -685,20 +658,19 @@ namespace battleship
         {
             if (gameOver) return;
 
-            // ГѓГ®ГІГ®ГўГЁГ¬ ГЇГҐГ°ГҐГЄГ«ГѕГ·ГҐГ­ГЁГҐ ГµГ®Г¤Г 
+            // Готовим переключение хода
             pendingSwitch = PendingSwitchMode.NextTurnBattle;
 
-            // ГЉГ­Г®ГЇГЄГ  "ГЉГ®Г­ГҐГ¶ ГµГ®Г¤Г " Г±ГІГ Г­Г®ГўГЁГІГ±Гї Г­ГҐГ ГЄГІГЁГўГ­Г®Г© Г¤Г® ГўГ»Г±ГІГ°ГҐГ«Г  Гў Г­Г®ГўГ®Г¬ ГµГ®Г¤Гі
+            // Кнопка "Конец хода" становится неактивной до выстрела в новом ходу
             btnFinishSetup.Enabled = false;
             btnFinishSetup.BackColor = Color.LightGray;
 
-            string nextPlayerText = currentPlayer == Player.Player1 ? "Г€ГЈГ°Г®ГЄ 2" : "Г€ГЈГ°Г®ГЄ 1";
+            string nextPlayerText = currentPlayer == Player.Player1 ? "Игрок 2" : "Игрок 1";
 
             ShowSwitchPanel(
-                $"Г•Г®Г¤ ГЇГҐГ°ГҐГµГ®Г¤ГЁГІ ГЄ: {nextPlayerText}.\n" +
-                "ГЏГҐГ°ГҐГ¤Г Г©ГІГҐ ГіГЇГ°Г ГўГ«ГҐГ­ГЁГҐ ГЅГІГ®Г¬Гі ГЁГЈГ°Г®ГЄГі.\n" +
-                "ГЌГ Г¦Г¬ГЁГІГҐ \"ГѓГ®ГІГ®ГўГ®\", ГЄГ®ГЈГ¤Г  Г®Г­ ГЎГіГ¤ГҐГІ ГЈГ®ГІГ®Гў ГЄ ГµГ®Г¤Гі.");
+                $"Ход переходит к: {nextPlayerText}.\n" +
+                "Передайте управление этому игроку.\n" +
+                "Нажмите \"Готово\", когда он будет готов к ходу.");
         }
     }
 }
-

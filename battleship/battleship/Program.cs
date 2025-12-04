@@ -2,7 +2,7 @@ using System;
 using System.Windows.Forms;
 
 namespace battleship
-{ 
+{
     internal static class Program
     {
         [STAThread]
