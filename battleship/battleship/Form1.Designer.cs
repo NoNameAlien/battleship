@@ -12,7 +12,7 @@
             // 
             // Form1
             //  
-            this.ClientSize = new System.Drawing.Size(900, 500);
+            this.ClientSize = new System.Drawing.Size(840, 480);
             this.Name = "Form1";
             this.Text = "Морской бой";
             this.ResumeLayout(false);
