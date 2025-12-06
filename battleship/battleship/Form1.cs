@@ -76,6 +76,7 @@ namespace battleship
         GamePhase phase = GamePhase.SetupP1;
         PendingSwitchMode pendingSwitch = PendingSwitchMode.None;
         GameMode gameMode = GameMode.None;
+        Random rng = new Random();
         bool gameOver = false;
 
         // Был ли уже ПРОМАХ в текущем ходу
@@ -406,43 +407,82 @@ namespace battleship
 
         private void PlaceStandardFleet(Board b)
         {
-            void PutShip(int x1, int y1, int x2, int y2)
+            // Стандартный набор кораблей: 1x4, 2x3, 3x2, 4x1
+            int[] shipLengths = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+
+            // Локальная функция: проверка, можно ли поставить корабль
+            bool CanPlace(int startX, int startY, int length, bool horizontal)
             {
-                if (x1 == x2)
+                int dx = horizontal ? 1 : 0;
+                int dy = horizontal ? 0 : 1;
+
+                // Проверяем, не вылезает ли за границы
+                int endX = startX + dx * (length - 1);
+                int endY = startY + dy * (length - 1);
+                if (endX < 0 || endX >= Board.Size || endY < 0 || endY >= Board.Size)
+                    return false;
+
+                // Проверяем клетки корабля и соседние (чтобы не соприкасались)
+                for (int i = 0; i < length; i++)
                 {
-                    int step = y2 > y1 ? 1 : -1;
-                    for (int y = y1; y != y2 + step; y += step)
+                    int x = startX + dx * i;
+                    int y = startY + dy * i;
+
+                    for (int ny = y - 1; ny <= y + 1; ny++)
                     {
-                        b.Cells[x1, y] = CellState.Ship;
-                        b.TotalShipCells++;
+                        for (int nx = x - 1; nx <= x + 1; nx++)
+                        {
+                            if (nx < 0 || nx >= Board.Size || ny < 0 || ny >= Board.Size)
+                                continue;
+
+                            if (b.Cells[nx, ny] == CellState.Ship)
+                                return false;
+                        }
                     }
                 }
-                else if (y1 == y2)
+
+                return true;
+            }
+
+            // Локальная функция: фактически поставить корабль
+            void PutShipRandom(int length)
+            {
+                bool placed = false;
+                int attempts = 0;
+
+                while (!placed)
                 {
-                    int step = x2 > x1 ? 1 : -1;
-                    for (int x = x1; x != x2 + step; x += step)
+                    attempts++;
+                    if (attempts > 1000)
+                        throw new Exception("Не удалось расставить корабли случайно. Попробуйте ещё раз.");
+
+                    bool horizontal = rng.Next(2) == 0;
+                    int startX = rng.Next(Board.Size);
+                    int startY = rng.Next(Board.Size);
+
+                    if (!CanPlace(startX, startY, length, horizontal))
+                        continue;
+
+                    int dx = horizontal ? 1 : 0;
+                    int dy = horizontal ? 0 : 1;
+
+                    for (int i = 0; i < length; i++)
                     {
-                        b.Cells[x, y1] = CellState.Ship;
+                        int x = startX + dx * i;
+                        int y = startY + dy * i;
+                        b.Cells[x, y] = CellState.Ship;
                         b.TotalShipCells++;
                     }
+
+                    placed = true;
                 }
             }
 
-            // Пример стандартного флота:
-            // 4-палубник
-            PutShip(1, 1, 4, 1);
-            // 3-палубники
-            PutShip(1, 3, 3, 3);
-            PutShip(6, 2, 6, 4);
-            // 2-палубники
-            PutShip(0, 7, 1, 7);
-            PutShip(4, 6, 5, 6);
-            PutShip(8, 8, 9, 8);
-            // 1-палубники
-            PutShip(9, 0, 9, 0);
-            PutShip(0, 9, 0, 9);
-            PutShip(5, 9, 5, 9);
-            PutShip(7, 5, 7, 5);
+            // Сбрасываем счётчик палуб
+            b.TotalShipCells = 0;
+
+            foreach (int len in shipLengths)
+                PutShipRandom(len);
         }
 
         // Переключение отображения полей
